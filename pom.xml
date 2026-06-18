@@ -399,7 +399,8 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- OWASP Dependency Check (run with: mvn dependency-check:check) -->
+			<!-- OWASP Dependency Check (run with: mvn dependency-check:check -DnvdApiKey=YOUR_KEY) -->
+			<!-- Get free NVD API key at: https://nvd.nist.gov/developers/request-an-api-key -->
 			<plugin>
 				<groupId>org.owasp</groupId>
 				<artifactId>dependency-check-maven</artifactId>
@@ -407,6 +408,7 @@
 				<configuration>
 					<failBuildOnCVSS>7</failBuildOnCVSS>
 					<suppressionFile>dependency-check-suppressions.xml</suppressionFile>
+					<nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
 					<formats>
 						<format>HTML</format>
 						<format>JSON</format>

@@ -139,6 +139,8 @@ jobs:
 
       - name: Run OWASP Dependency Check
         run: ./mvnw dependency-check:check -B -DfailBuildOnCVSS=7
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         continue-on-error: true
 
       - name: Upload OWASP report
