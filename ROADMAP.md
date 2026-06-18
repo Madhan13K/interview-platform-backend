@@ -102,11 +102,11 @@
 
 | # | Feature | Size | Package | Status | Description |
 |---|---------|------|---------|--------|-------------|
-| 61 | Configurable Workflow Engine | Large | `workflow` | PLANNED | Rule-based automation (e.g., "if avg score > 4, auto-advance to next stage"). Supports triggers, conditions, and actions. |
-| 62 | Approval Workflows | Medium | `approval` | PLANNED | Configurable approval chains for offers, job requisitions, job postings. Sequential/parallel approvers. |
-| 63 | Referral Program | Medium | `referral` | PLANNED | Employee referral tracking, bonus workflows, referral source analytics, leaderboards. |
-| 64 | DEI/Diversity Analytics | Medium | `dei` | PLANNED | Opt-in demographic tracking, funnel analysis by diversity categories, bias detection alerts. |
-| 65 | Source Effectiveness | Small | `sourcetracking` | PLANNED | Track candidate sources (LinkedIn, referral, job board), calculate source ROI, cost-per-hire. |
+| 61 | Configurable Workflow Engine | Large | `workflow` | DONE | Rule-based automation (e.g., "if avg score > 4, auto-advance to next stage"). Supports triggers, conditions, and actions. |
+| 62 | Approval Workflows | Medium | `approval` | DONE | Configurable approval chains for offers, job requisitions, job postings. Sequential/parallel/any-one approvers. |
+| 63 | Referral Program | Medium | `referral` | DONE | Employee referral tracking, bonus workflows, referral source analytics, leaderboards. |
+| 64 | DEI/Diversity Analytics | Medium | `dei` | DONE | Opt-in demographic tracking, funnel analysis by diversity categories, aggregated-only stats (privacy-first). |
+| 65 | Source Effectiveness | Small | `sourcetracking` | DONE | Track candidate sources (LinkedIn, referral, job board), calculate source ROI, cost-per-hire. |
 
 ---
 
