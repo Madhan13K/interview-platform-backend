@@ -1,0 +1,306 @@
+# Development profile - verbose logging, show SQL, Docker Compose enabled
+# All features enabled for local testing (mirrors production behavior)
+
+spring:
+  application:
+    name: interview-platform-backend
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/interview_platform}
+    username: ${DB_USERNAME:admin}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX:10}
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+
+  security:
+    user:
+      name: admin
+      password: ${SPRING_SECURITY_PASSWORD:admin}
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:placeholder}
+            client-secret: ${GOOGLE_CLIENT_SECRET:placeholder}
+            scope: [openid, profile, email]
+            redirect-uri: "${OAUTH2_BASE_URL:http://localhost:8080}/login/oauth2/code/google"
+          github:
+            client-id: ${GITHUB_CLIENT_ID:placeholder}
+            client-secret: ${GITHUB_CLIENT_SECRET:placeholder}
+            scope: [user:email, read:user]
+            redirect-uri: "${OAUTH2_BASE_URL:http://localhost:8080}/login/oauth2/code/github"
+          microsoft:
+            client-id: ${MICROSOFT_CLIENT_ID:placeholder}
+            client-secret: ${MICROSOFT_CLIENT_SECRET:placeholder}
+            scope: [openid, profile, email]
+            redirect-uri: "${OAUTH2_BASE_URL:http://localhost:8080}/login/oauth2/code/microsoft"
+            client-name: Microsoft
+            authorization-grant-type: authorization_code
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://openidconnect.googleapis.com/v1/userinfo
+            user-name-attribute: email
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
+            user-name-attribute: login
+          microsoft:
+            authorization-uri: https://login.microsoftonline.com/common/oauth2/v2.0/authorize
+            token-uri: https://login.microsoftonline.com/common/oauth2/v2.0/token
+            user-info-uri: https://graph.microsoft.com/oidc/userinfo
+            user-name-attribute: email
+
+  # Vault (optional for dev - uses dev token from docker compose)
+  cloud:
+    vault:
+      enabled: ${VAULT_ENABLED:false}
+      host: ${VAULT_HOST:localhost}
+      port: ${VAULT_PORT:8200}
+      scheme: http
+      authentication: TOKEN
+      token: ${VAULT_TOKEN:dev-root-token}
+      kv:
+        enabled: true
+        backend: secret
+        default-context: interview-platform
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:noreply@example.com}
+    password: ${MAIL_PASSWORD:changeme}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: interview-platform
+      auto-offset-reset: earliest
+    listener:
+      auto-startup: ${KAFKA_ENABLED:true}
+
+  task:
+    execution:
+      pool:
+        core-size: 10
+        max-size: 50
+        queue-capacity: 500
+        keep-alive: 60s
+      thread-name-prefix: async-thread-
+    scheduling:
+      pool:
+        size: 5
+      thread-name-prefix: scheduler-thread-
+
+  mvc:
+    async:
+      request-timeout: 30000
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 5
+          min-idle: 2
+
+  docker:
+    compose:
+      enabled: ${DOCKER_COMPOSE_ENABLED:true}
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+    max-connections: 10000
+    accept-count: 100
+    connection-timeout: 20000
+  error:
+    include-message: always
+    include-binding-errors: always
+
+jwt:
+  secret: ${JWT_SECRET:6D5A7134743777217A25432A462D4A614E645267556B58703273357638792F423F}
+  expiration: ${JWT_EXPIRATION:86400000}
+  refresh-secret: ${JWT_REFRESH_SECRET:8f4c9d71b2e6a30f5c1d9847e2ab6c903d1f7a5e4b8c2d9f6a0e3c7b1d5f9a2c}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:1209600000}
+
+rsa:
+  public-key: classpath:certs/public.pem
+  private-key: classpath:certs/private.pem
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: [health, info, metrics, prometheus, loggers]
+  endpoint:
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: ${OTEL_TRACES_SAMPLING_PROBABILITY:1.0}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://localhost:4318/v1/traces}
+    metrics:
+      endpoint: ${OTEL_EXPORTER_OTLP_METRICS_ENDPOINT:http://localhost:4318/v1/metrics}
+
+logging:
+  level:
+    root: INFO
+    com.interview_platform_backend: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+
+app:
+  kafka:
+    enabled: ${KAFKA_ENABLED:true}
+  notifications:
+    enabled: ${NOTIFICATIONS_ENABLED:true}
+  sms:
+    enabled: ${SMS_ENABLED:true}
+    provider: ${SMS_PROVIDER:twilio}
+  auth:
+    reset-password-base-url: ${FRONTEND_URL:http://localhost:5173}/reset-password
+    verification-base-url: ${FRONTEND_URL:http://localhost:5173}/verify-email
+  slack:
+    enabled: ${SLACK_ENABLED:true}
+    webhook-url: ${SLACK_WEBHOOK_URL:}
+  teams:
+    enabled: ${TEAMS_ENABLED:true}
+    webhook-url: ${TEAMS_WEBHOOK_URL:}
+  meeting:
+    zoom:
+      enabled: ${ZOOM_ENABLED:true}
+      api-key: ${ZOOM_API_KEY:}
+      api-secret: ${ZOOM_API_SECRET:}
+    google:
+      enabled: ${GOOGLE_MEET_ENABLED:true}
+      client-id: ${GOOGLE_MEET_CLIENT_ID:}
+  sso:
+    base-url: ${SSO_BASE_URL:http://localhost:8080}
+  calendar-sync:
+    enabled: ${CALENDAR_SYNC_ENABLED:true}
+    sync-interval-minutes: ${CALENDAR_SYNC_INTERVAL:15}
+  offer:
+    default-expiry-days: ${OFFER_EXPIRY_DAYS:7}
+    docusign:
+      enabled: ${DOCUSIGN_ENABLED:true}
+      api-base-url: ${DOCUSIGN_API_URL:https://demo.docusign.net/restapi}
+      account-id: ${DOCUSIGN_ACCOUNT_ID:}
+      integration-key: ${DOCUSIGN_INTEGRATION_KEY:}
+    hellosign:
+      enabled: ${HELLOSIGN_ENABLED:true}
+      api-key: ${HELLOSIGN_API_KEY:}
+  security:
+    lockout:
+      enabled: ${LOCKOUT_ENABLED:true}
+      max-failed-attempts: ${LOCKOUT_MAX_ATTEMPTS:5}
+      lock-duration-minutes: ${LOCKOUT_DURATION_MINUTES:30}
+      attempt-window-minutes: ${LOCKOUT_WINDOW_MINUTES:15}
+      max-failed-attempts-per-ip: ${LOCKOUT_MAX_IP_ATTEMPTS:20}
+      ip-block-duration-minutes: ${LOCKOUT_IP_BLOCK_MINUTES:60}
+      alerts-enabled: ${LOCKOUT_ALERTS_ENABLED:true}
+      alert-threshold: ${LOCKOUT_ALERT_THRESHOLD:3}
+      ip-blocking-enabled: ${LOCKOUT_IP_BLOCKING:true}
+    rsa:
+      from-vault: ${RSA_FROM_VAULT:false}
+  encryption:
+    enabled: ${ENCRYPTION_ENABLED:true}
+    secret-key: ${ENCRYPTION_SECRET_KEY:}
+    algorithm: AES/GCM/NoPadding
+    iv-length: 12
+    tag-length: 128
+  database:
+    separate-users: ${DB_SEPARATE_USERS:false}
+    ddl:
+      url: ${DB_DDL_URL:jdbc:postgresql://localhost:5433/interview_platform}
+      username: ${DB_DDL_USERNAME:admin}
+      password: ${DB_DDL_PASSWORD:postgres}
+
+# --- Code Execution Engine ---
+code-execution:
+  enabled: ${CODE_EXECUTION_ENABLED:true}
+  max-timeout-ms: ${CODE_EXECUTION_MAX_TIMEOUT:30000}
+  default-timeout-ms: ${CODE_EXECUTION_DEFAULT_TIMEOUT:10000}
+  memory-limit-bytes: ${CODE_EXECUTION_MEMORY_LIMIT:268435456}
+  cpu-period-micros: 100000
+  cpu-quota-micros: 50000
+  pids-limit: 64
+  max-output-size: 65536
+  network-disabled: true
+  max-concurrent-executions: ${CODE_EXECUTION_MAX_CONCURRENT:10}
+  max-source-code-size: 100000
+  docker:
+    host: ${DOCKER_HOST:unix:///var/run/docker.sock}
+    connection-timeout-ms: 5000
+    response-timeout-ms: 30000
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      emailService:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+      webhookService:
+        slidingWindowSize: 20
+        failureRateThreshold: 60
+        waitDurationInOpenState: 60s
+      aiService:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        ignoreExceptions:
+          - com.interview_platform_backend.interview_platform_backend.exception.ResourceNotFoundException
+          - com.interview_platform_backend.interview_platform_backend.exception.BadRequestException
+  retry:
+    instances:
+      emailService:
+        maxAttempts: 3
+        waitDuration: 2s
+      webhookService:
+        maxAttempts: 3
+        waitDuration: 5s
+
+# --- AWS S3 / LocalStack (Free, no payment required) ---
+aws:
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME:interview-platform-documents}
+    region: ${AWS_S3_REGION:us-east-1}
+    access-key: ${AWS_S3_ACCESS_KEY:test}
+    secret-key: ${AWS_S3_SECRET_KEY:test}
+    endpoint: ${AWS_S3_ENDPOINT:http://localhost:4566}
+    presigned-url-expiry-minutes: ${AWS_S3_PRESIGNED_URL_EXPIRY:60}

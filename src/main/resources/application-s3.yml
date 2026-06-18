@@ -1,0 +1,17 @@
+# AWS S3 Configuration
+aws:
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME:interview-platform-documents}
+    region: ${AWS_S3_REGION:us-east-1}
+    access-key: ${AWS_S3_ACCESS_KEY:}
+    secret-key: ${AWS_S3_SECRET_KEY:}
+    endpoint: ${AWS_S3_ENDPOINT:}
+    presigned-url-expiry-minutes: ${AWS_S3_PRESIGNED_URL_EXPIRY:60}
+
+# File upload limits
+spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 55MB
+

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #10b981; padding: 20px; border-radius: 8px 8px 0 0;">
+    <h1 style="color: white; margin: 0;">Verify Your Email</h1>
+  </div>
+  <div style="border: 1px solid #e5e7eb; padding: 20px; border-radius: 0 0 8px 8px;">
+    <p>Hello <span th:text="${userName}">User</span>,</p>
+    <p>Please verify your email address by clicking the button below:</p>
+    <div style="text-align: center; margin: 20px 0;">
+      <a th:href="${verificationUrl}" style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Verify Email</a>
+    </div>
+    <p style="color: #6b7280; font-size: 12px;">This link expires in 24 hours. If you did not create an account, you can ignore this email.</p>
+  </div>
+</body>
+</html>

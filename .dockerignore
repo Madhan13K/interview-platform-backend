@@ -1,0 +1,32 @@
+# Build output
+target/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Git
+.git/
+.gitignore
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Docker
+Dockerfile
+.dockerignore
+compose.yaml
+
+# Docs/scripts
+*.md
+scripts/
+
+# OS files
+.DS_Store
+Thumbs.db

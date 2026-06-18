@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #2563eb; padding: 20px; border-radius: 8px 8px 0 0;">
+    <h1 style="color: white; margin: 0;">Interview Invitation</h1>
+  </div>
+  <div style="border: 1px solid #e5e7eb; padding: 20px; border-radius: 0 0 8px 8px;">
+    <p>Hello <span th:text="${candidateName}">Candidate</span>,</p>
+    <p>You have been invited to an interview for <strong th:text="${jobTitle}">Position</strong>.</p>
+    <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
+      <tr><td style="padding: 8px; font-weight: bold;">Date:</td><td style="padding: 8px;" th:text="${interviewDate}">Date</td></tr>
+      <tr><td style="padding: 8px; font-weight: bold;">Time:</td><td style="padding: 8px;" th:text="${interviewTime}">Time</td></tr>
+      <tr><td style="padding: 8px; font-weight: bold;">Type:</td><td style="padding: 8px;" th:text="${interviewType}">Type</td></tr>
+      <tr><td style="padding: 8px; font-weight: bold;">Mode:</td><td style="padding: 8px;" th:text="${interviewMode}">Mode</td></tr>
+    </table>
+    <div th:if="${meetingLink}" style="text-align: center; margin: 20px 0;">
+      <a th:href="${meetingLink}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Join Meeting</a>
+    </div>
+    <p style="color: #6b7280; font-size: 12px;">If you need to reschedule, please contact your recruiter.</p>
+  </div>
+</body>
+</html>

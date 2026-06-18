@@ -1,0 +1,62 @@
+# Production profile - strict settings, Vault secrets, separate DB users
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  docker:
+    compose:
+      enabled: false
+  cloud:
+    vault:
+      enabled: true
+      host: ${VAULT_HOST}
+      port: ${VAULT_PORT:8200}
+      scheme: ${VAULT_SCHEME:https}
+      authentication: ${VAULT_AUTH_METHOD:TOKEN}
+      token: ${VAULT_TOKEN:}
+      kv:
+        enabled: true
+        backend: secret
+        default-context: interview-platform
+        profile-separator: /
+  config:
+    import: vault://
+
+server:
+  error:
+    include-message: never
+    include-binding-errors: never
+
+logging:
+  level:
+    root: WARN
+    com.interview_platform_backend: INFO
+    org.springframework.security: WARN
+
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Note: OpenTelemetry configuration is handled entirely by the Java Agent
+# via environment variables (OTEL_*). See compose.yaml or deployment manifests.
+
+app:
+  kafka:
+    enabled: true
+  notifications:
+    enabled: true
+  sms:
+    enabled: true
+    provider: twilio
+  database:
+    separate-users: true
+    ddl:
+      url: ${DB_DDL_URL}
+      username: ${DB_DDL_USERNAME:ddl_admin}
+      password: ${DB_DDL_PASSWORD}
+  security:
+    rsa:
+      from-vault: true
+

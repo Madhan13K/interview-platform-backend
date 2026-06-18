@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #f59e0b; padding: 20px; border-radius: 8px 8px 0 0;">
+    <h1 style="color: white; margin: 0;">Interview Reminder</h1>
+  </div>
+  <div style="border: 1px solid #e5e7eb; padding: 20px; border-radius: 0 0 8px 8px;">
+    <p>Hello <span th:text="${recipientName}">User</span>,</p>
+    <p>This is a reminder that your interview <strong th:text="${interviewTitle}">Title</strong> is starting <strong th:text="${timeUntil}">soon</strong>.</p>
+    <div th:if="${meetingLink}" style="text-align: center; margin: 20px 0;">
+      <a th:href="${meetingLink}" style="background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Join Now</a>
+    </div>
+  </div>
+</body>
+</html>

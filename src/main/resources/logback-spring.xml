@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Logback Configuration with:
+  - JSON structured logging for production (ELK/Datadog compatible)
+  - Human-readable console logging for development
+  - MDC correlation IDs (traceId, spanId, correlationId, userId)
+  - Async appenders for performance
+-->
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="interview-platform-backend"/>
+    <springProperty scope="context" name="environment" source="spring.profiles.active" defaultValue="dev"/>
+
+    <!-- ======================================================================
+         Development Profile: Human-readable console output
+         ====================================================================== -->
+    <springProfile name="dev,default">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%thread] [%X{correlationId:-}] %cyan(%logger{36}) - %msg%n</pattern>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+
+        <logger name="com.interview_platform_backend" level="DEBUG"/>
+        <logger name="org.springframework.security" level="DEBUG"/>
+    </springProfile>
+
+    <!-- ======================================================================
+         Production Profile: JSON structured logging (ELK/Datadog/Loki)
+         ====================================================================== -->
+    <springProfile name="prod,staging">
+        <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeMdcKeyName>correlationId</includeMdcKeyName>
+                <includeMdcKeyName>traceId</includeMdcKeyName>
+                <includeMdcKeyName>spanId</includeMdcKeyName>
+                <includeMdcKeyName>userId</includeMdcKeyName>
+                <includeMdcKeyName>requestMethod</includeMdcKeyName>
+                <includeMdcKeyName>requestUri</includeMdcKeyName>
+                <includeMdcKeyName>clientIp</includeMdcKeyName>
+                <includeMdcKeyName>userAgent</includeMdcKeyName>
+
+                <customFields>
+                    {"service":"${appName}","environment":"${environment}"}
+                </customFields>
+
+                <!-- Include caller info for ERROR level -->
+                <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                    <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                    <maxLength>2048</maxLength>
+                    <shortenedClassNameLength>20</shortenedClassNameLength>
+                    <rootCauseFirst>true</rootCauseFirst>
+                </throwableConverter>
+
+                <timeZone>UTC</timeZone>
+                <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS'Z'</timestampPattern>
+            </encoder>
+        </appender>
+
+        <!-- Async wrapper for production (non-blocking logging) -->
+        <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+            <queueSize>1024</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <includeCallerData>false</includeCallerData>
+            <neverBlock>true</neverBlock>
+            <appender-ref ref="JSON_CONSOLE"/>
+        </appender>
+
+        <!-- JSON file appender for log aggregation -->
+        <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>/var/log/app/application.json</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>/var/log/app/application.%d{yyyy-MM-dd}.%i.json.gz</fileNamePattern>
+                <maxFileSize>100MB</maxFileSize>
+                <maxHistory>30</maxHistory>
+                <totalSizeCap>3GB</totalSizeCap>
+            </rollingPolicy>
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>
+                    {"service":"${appName}","environment":"${environment}"}
+                </customFields>
+                <timeZone>UTC</timeZone>
+            </encoder>
+        </appender>
+
+        <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+            <queueSize>2048</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <appender-ref ref="JSON_FILE"/>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="ASYNC_JSON"/>
+            <appender-ref ref="ASYNC_FILE"/>
+        </root>
+
+        <logger name="com.interview_platform_backend" level="INFO"/>
+        <!-- Suppress noisy libraries in production -->
+        <logger name="org.hibernate.SQL" level="WARN"/>
+        <logger name="org.springframework.web" level="WARN"/>
+        <logger name="org.apache.kafka" level="WARN"/>
+    </springProfile>
+
+</configuration>

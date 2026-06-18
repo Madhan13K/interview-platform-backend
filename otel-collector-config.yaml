@@ -1,0 +1,77 @@
+# OpenTelemetry Collector Configuration
+# This file configures how the OTel Collector receives, processes, and exports telemetry data.
+
+receivers:
+  # OTLP receiver accepts traces, metrics, and logs via gRPC (4317) and HTTP (4318)
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Batch processor groups spans/metrics before exporting (reduces network overhead)
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Memory limiter prevents OOM by refusing data when memory is high
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+  # Resource processor adds/overrides resource attributes
+  resource:
+    attributes:
+      - key: service.instance.id
+        from_attribute: host.name
+        action: upsert
+
+exporters:
+  # Debug exporter logs telemetry to stdout (useful for development)
+  debug:
+    verbosity: basic
+
+  # OTLP exporter sends traces to Jaeger
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+  # Prometheus exporter exposes metrics for scraping
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    namespace: interview_platform
+
+extensions:
+  # Health check extension (used by Docker healthcheck)
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+  # pprof extension for performance profiling
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+service:
+  extensions: [health_check, pprof]
+  pipelines:
+    # Traces pipeline: receive via OTLP -> batch -> export to Jaeger + debug
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/jaeger, debug]
+
+    # Metrics pipeline: receive via OTLP -> batch -> export to Prometheus + debug
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus, debug]
+
+    # Logs pipeline: receive via OTLP -> batch -> export to debug
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [debug]

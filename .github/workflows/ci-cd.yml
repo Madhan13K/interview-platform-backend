@@ -1,0 +1,294 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  JAVA_VERSION: '21'
+  DOCKER_IMAGE: interview-platform-backend
+  REGISTRY: ghcr.io
+
+jobs:
+  # ==========================================================================
+  # Stage 1: Build and Unit Tests
+  # ==========================================================================
+  build:
+    name: Build & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build and run unit tests
+        run: ./mvnw verify -DskipIntegrationTests -B
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: target/surefire-reports/
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: target/*.jar
+
+  # ==========================================================================
+  # Stage 2: Integration Tests with Testcontainers
+  # ==========================================================================
+  integration-tests:
+    name: Integration Tests (Testcontainers)
+    runs-on: ubuntu-latest
+    needs: build
+    services:
+      # Docker-in-Docker not needed - Testcontainers uses the host Docker
+      docker:
+        image: docker:dind
+        options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run integration tests with Testcontainers
+        run: ./mvnw verify -PintegrationTests -B
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: 'false'
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: target/failsafe-reports/
+
+  # ==========================================================================
+  # Stage 3: SAST - Static Application Security Testing (SonarQube)
+  # ==========================================================================
+  sast:
+    name: SAST (SonarCloud)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for SonarCloud
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Build and analyze with SonarCloud
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./mvnw verify sonar:sonar \
+            -DskipTests \
+            -Dsonar.projectKey=${{ github.repository_owner }}_interview-platform-backend \
+            -Dsonar.organization=${{ github.repository_owner }} \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.java.coveragePlugin=jacoco \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -B
+
+  # ==========================================================================
+  # Stage 4: Dependency Vulnerability Scanning (OWASP Dependency Check)
+  # ==========================================================================
+  dependency-scan:
+    name: Dependency Scan (OWASP)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Cache NVD data
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: ${{ runner.os }}-owasp-nvd-${{ hashFiles('pom.xml') }}
+          restore-keys: ${{ runner.os }}-owasp-nvd-
+
+      - name: Run OWASP Dependency Check
+        run: ./mvnw dependency-check:check -B -DfailBuildOnCVSS=7
+        continue-on-error: true  # Don't fail PR on first run; review results
+
+      - name: Upload OWASP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-dependency-check-report
+          path: target/dependency-check-report.*
+
+  # ==========================================================================
+  # Stage 5: Build Docker Image & Trivy Scan
+  # ==========================================================================
+  docker-build-scan:
+    name: Docker Build & Trivy Scan
+    runs-on: ubuntu-latest
+    needs: [build, integration-tests]
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'  # Set to '1' to fail on vulnerabilities
+
+      - name: Upload Trivy scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run Trivy (table output for PR comment)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+          format: 'table'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Log in to Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image to registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ==========================================================================
+  # Stage 6: Database Migration (Dry Run)
+  # ==========================================================================
+  migration-check:
+    name: DB Migration Validation
+    runs-on: ubuntu-latest
+    needs: build
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: interview_platform_test
+          POSTGRES_USER: ddl_admin
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ddl_admin -d interview_platform_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Validate Flyway migrations
+        run: |
+          ./mvnw flyway:validate -B \
+            -Dflyway.url=jdbc:postgresql://localhost:5432/interview_platform_test \
+            -Dflyway.user=ddl_admin \
+            -Dflyway.password=test_password \
+            -Dflyway.locations=classpath:db/migration
+        continue-on-error: true
+
+      - name: Run Flyway migrations
+        run: |
+          ./mvnw flyway:migrate -B \
+            -Dflyway.url=jdbc:postgresql://localhost:5432/interview_platform_test \
+            -Dflyway.user=ddl_admin \
+            -Dflyway.password=test_password \
+            -Dflyway.locations=classpath:db/migration
+
+  # ==========================================================================
+  # Stage 7: Security Summary Gate
+  # ==========================================================================
+  security-gate:
+    name: Security Gate
+    runs-on: ubuntu-latest
+    needs: [sast, dependency-scan, docker-build-scan]
+    if: always()
+    steps:
+      - name: Check security scan results
+        run: |
+          echo "=== Security Scan Summary ==="
+          echo "SAST (SonarCloud): ${{ needs.sast.result }}"
+          echo "Dependency Scan (OWASP): ${{ needs.dependency-scan.result }}"
+          echo "Docker Scan (Trivy): ${{ needs.docker-build-scan.result }}"
+          echo ""
+          if [ "${{ needs.sast.result }}" == "failure" ] || \
+             [ "${{ needs.docker-build-scan.result }}" == "failure" ]; then
+            echo "CRITICAL security issues found. Review scan results."
+            exit 1
+          fi
+          echo "All security gates passed."
