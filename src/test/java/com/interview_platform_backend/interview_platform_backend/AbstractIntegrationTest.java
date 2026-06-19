@@ -58,10 +58,13 @@ public abstract class AbstractIntegrationTest {
         registry.add("app.notifications.enabled", () -> "false");
         registry.add("app.sms.enabled", () -> "false");
 
-        // Redis - disable (use no cache for tests)
+        // Redis - disable completely for tests
         registry.add("spring.data.redis.host", () -> "localhost");
         registry.add("spring.data.redis.port", () -> "6379");
         registry.add("spring.cache.type", () -> "none");
+        registry.add("spring.autoconfigure.exclude", () ->
+                "org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration," +
+                "org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration");
 
         // Docker compose - disable
         registry.add("spring.docker.compose.enabled", () -> "false");

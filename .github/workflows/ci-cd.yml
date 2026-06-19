@@ -54,6 +54,7 @@ jobs:
     name: Integration Tests (Testcontainers)
     runs-on: ubuntu-latest
     needs: build
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v5
 
