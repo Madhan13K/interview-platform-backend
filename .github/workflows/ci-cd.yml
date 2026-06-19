@@ -84,6 +84,8 @@ jobs:
     name: SAST (SonarCloud)
     runs-on: ubuntu-latest
     needs: build
+    # Only run if SONAR_TOKEN is configured
+    if: ${{ secrets.SONAR_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -287,9 +289,12 @@ jobs:
           echo "Dependency Scan (OWASP): ${{ needs.dependency-scan.result }}"
           echo "Docker Scan (Trivy): ${{ needs.docker-build-scan.result }}"
           echo ""
-          if [ "${{ needs.sast.result }}" == "failure" ] || \
-             [ "${{ needs.docker-build-scan.result }}" == "failure" ]; then
-            echo "CRITICAL security issues found. Review scan results."
+          if [ "${{ needs.docker-build-scan.result }}" == "failure" ]; then
+            echo "CRITICAL security issues found in Docker scan. Review results."
             exit 1
           fi
-          echo "All security gates passed."
+          if [ "${{ needs.sast.result }}" == "failure" ]; then
+            echo "SAST scan failed. Review SonarCloud results."
+            exit 1
+          fi
+          echo "All security gates passed (skipped jobs are acceptable)."
