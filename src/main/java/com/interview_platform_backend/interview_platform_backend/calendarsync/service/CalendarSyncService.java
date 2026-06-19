@@ -456,7 +456,8 @@ public class CalendarSyncService {
     }
 
     private String ensureValidToken(CalendarConnection connection) {
-        if (connection.getTokenExpiresAt() != null && connection.getTokenExpiresAt().isAfter(Instant.now())) {
+        if (connection.getTokenExpiresAt() != null &&
+                connection.getTokenExpiresAt().isAfter(Instant.now().plusSeconds(60))) {
             return connection.getAccessToken();
         }
 
@@ -464,17 +465,30 @@ public class CalendarSyncService {
             throw new BadRequestException("Token expired and no refresh token available for connection: " + connection.getId());
         }
 
-        CalendarProviderService provider = getProviderService(connection.getProvider());
-        TokenResponse newTokens = provider.refreshAccessToken(connection.getRefreshToken());
+        // Synchronized on connection ID to prevent race condition when multiple threads
+        // try to refresh the same token simultaneously
+        synchronized (("calendar-token-refresh-" + connection.getId()).intern()) {
+            // Double-check after acquiring lock (another thread may have already refreshed)
+            CalendarConnection freshConnection = connectionRepository.findById(connection.getId()).orElse(connection);
+            if (freshConnection.getTokenExpiresAt() != null &&
+                    freshConnection.getTokenExpiresAt().isAfter(Instant.now().plusSeconds(60))) {
+                connection.setAccessToken(freshConnection.getAccessToken());
+                connection.setTokenExpiresAt(freshConnection.getTokenExpiresAt());
+                return freshConnection.getAccessToken();
+            }
 
-        connection.setAccessToken(newTokens.accessToken());
-        if (newTokens.refreshToken() != null) {
-            connection.setRefreshToken(newTokens.refreshToken());
+            CalendarProviderService provider = getProviderService(connection.getProvider());
+            TokenResponse newTokens = provider.refreshAccessToken(connection.getRefreshToken());
+
+            connection.setAccessToken(newTokens.accessToken());
+            if (newTokens.refreshToken() != null) {
+                connection.setRefreshToken(newTokens.refreshToken());
+            }
+            connection.setTokenExpiresAt(newTokens.expiresAt());
+            connectionRepository.save(connection);
+
+            return newTokens.accessToken();
         }
-        connection.setTokenExpiresAt(newTokens.expiresAt());
-        connectionRepository.save(connection);
-
-        return newTokens.accessToken();
     }
 
     private boolean isUserParticipant(Interview interview, UUID userId) {

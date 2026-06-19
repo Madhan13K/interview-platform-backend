@@ -17,5 +17,7 @@ public interface CodeExecutionRepository extends JpaRepository<CodeExecution, UU
 
     List<CodeExecution> findByStatus(ExecutionStatus status);
 
+    List<CodeExecution> findByStatusIn(List<ExecutionStatus> statuses);
+
     long countByCodingSessionId(UUID codingSessionId);
 }

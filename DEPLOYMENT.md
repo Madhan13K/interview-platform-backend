@@ -87,16 +87,19 @@ java -javaagent:opentelemetry-javaagent.jar \
 ### Build & Test
 
 ```bash
-# Compile
+# Compile + unit tests (no Docker services needed - default)
+./mvnw clean install
+
+# Compile only (no tests)
 ./mvnw compile
 
-# Run unit tests
+# Unit tests only (same as clean install - integration tests excluded by default)
 ./mvnw test
 
-# Run all tests including integration (requires Docker for Testcontainers)
-./mvnw verify
+# Integration tests (requires: docker compose up -d)
+./mvnw verify -PintegrationTests
 
-# Package JAR
+# Package JAR (skip tests)
 ./mvnw package -DskipTests
 
 # Run OWASP dependency check

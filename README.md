@@ -668,8 +668,22 @@ java -javaagent:opentelemetry-javaagent.jar \
 
 ### Run Tests
 ```bash
+# Unit tests only (no Docker services needed - default)
+./mvnw clean install
+
+# Same as above (explicit)
 ./mvnw test
+
+# Integration tests (requires: docker compose up -d)
+./mvnw verify -PintegrationTests
+
+# Skip ALL tests (fastest build)
+./mvnw clean install -DskipTests
 ```
+
+> **Note:** Integration tests (`*IntegrationTest.java`) are excluded from the default build 
+> because they require PostgreSQL, Redis, and Kafka. They run automatically in CI via 
+> Testcontainers, or locally after starting infrastructure with `docker compose up -d`.
 
 ### API Documentation
 Once running, visit: `http://localhost:8080/swagger-ui.html`
@@ -2614,4 +2628,20 @@ CALENDAR_SYNC_ENABLED=true
 DOCUSIGN_ENABLED=false
 HELLOSIGN_ENABLED=false
 ```
+
+---
+
+## Documentation Index
+
+| Document | Description |
+|----------|-------------|
+| [README.md](README.md) | Main project overview, API endpoints, architecture |
+| [API_TESTING.md](API_TESTING.md) | Complete API testing guide with curl commands for ALL 280+ endpoints |
+| [ENTITY_DESIGN.md](ENTITY_DESIGN.md) | Entity relationship diagrams, UML, all 55+ entities |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Deployment guide, environment variables, CI/CD, Kubernetes |
+| [ROADMAP.md](ROADMAP.md) | Feature status, roadmap, planned features |
+| [docs/README-ARCHITECTURE.md](docs/README-ARCHITECTURE.md) | System architecture, module map, data flow diagrams |
+| [docs/README-TECHNICAL.md](docs/README-TECHNICAL.md) | Deep-dive technical reference (auth, SAML, Kafka, Redis, OTel testing) |
+| [docs/README-BUSINESS.md](docs/README-BUSINESS.md) | Business overview, value proposition, executive summary |
+| [docs/SERVICES-CREDENTIALS.md](docs/SERVICES-CREDENTIALS.md) | All services inventory, API keys, credentials setup guide |
 

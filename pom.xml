@@ -37,7 +37,10 @@
 
 	<properties>
 		<java.version>21</java.version>
-		<spring-cloud.version>2024.0.1</spring-cloud.version>
+		<spring-cloud.version>2025.1.2</spring-cloud.version>
+		<!-- By default, exclude integration tests (they need Docker services) -->
+		<!-- Run integration tests explicitly with: mvn verify -PintegrationTests -->
+		<skipIntegrationTests.exclude>**/*IntegrationTest.java</skipIntegrationTests.exclude>
 	</properties>
 
 	<dependencyManagement>
@@ -149,19 +152,28 @@
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
-			<version>0.11.5</version>
+			<version>0.12.6</version>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-impl</artifactId>
-			<version>0.11.5</version>
+			<version>0.12.6</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-jackson</artifactId>
-			<version>0.11.5</version>
+			<version>0.12.6</version>
 			<scope>runtime</scope>
+		</dependency>
+		<!-- Spring Retry for email/notification retry mechanism -->
+		<dependency>
+			<groupId>org.springframework.retry</groupId>
+			<artifactId>spring-retry</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-aspects</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -365,6 +377,15 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>${skipIntegrationTests.exclude}</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<executions>
 					<execution>
@@ -425,6 +446,40 @@
 	</build>
 
 	<profiles>
+		<!-- Profile to skip integration tests (activated by -DskipIntegrationTests) -->
+		<profile>
+			<id>skipIntegrationTests</id>
+			<activation>
+				<property>
+					<name>skipIntegrationTests</name>
+				</property>
+			</activation>
+			<properties>
+				<skipIntegrationTests.exclude>**/*IntegrationTest.java</skipIntegrationTests.exclude>
+			</properties>
+		</profile>
+
+		<!-- Profile to run only integration tests -->
+		<profile>
+			<id>integrationTests</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<excludes>
+								<exclude>none</exclude>
+							</excludes>
+							<includes>
+								<include>**/*IntegrationTest.java</include>
+							</includes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
 		<!-- Profile for running OWASP checks in CI -->
 		<profile>
 			<id>security-scan</id>

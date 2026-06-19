@@ -77,6 +77,10 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       acks: all
       retries: 3
+      properties:
+        delivery.timeout.ms: 10000
+        request.timeout.ms: 5000
+        max.block.ms: 5000
     consumer:
       group-id: notification-service
       auto-offset-reset: earliest
@@ -84,8 +88,12 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "com.interview_platform_backend.*"
+        session.timeout.ms: 10000
+        heartbeat.interval.ms: 3000
     listener:
       auto-startup: ${KAFKA_LISTENER_AUTOSTART:false}
+    admin:
+      fail-fast: false
 
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}

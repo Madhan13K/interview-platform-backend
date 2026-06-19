@@ -3,13 +3,12 @@ package com.interview_platform_backend.interview_platform_backend.security.jwt;
 import com.interview_platform_backend.interview_platform_backend.security.jwks.RsaKeyProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,11 +49,11 @@ public class JwtService {
     }
 
     private Claims extractAllRefreshClaims(String refreshToken) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getRefreshSigningKey())
+        return Jwts.parser()
+                .verifyWith(getRefreshSigningKey())
                 .build()
-                .parseClaimsJws(refreshToken)
-                .getBody();
+                .parseSignedClaims(refreshToken)
+                .getPayload();
     }
 
     public String generateToken(UserDetails userDetails) {
@@ -67,13 +66,13 @@ public class JwtService {
      */
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return Jwts.builder()
-                .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername())
-                .setId(UUID.randomUUID().toString())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(currentTimeMillis() + jwtExpiration))
-                .setHeaderParam("access_token", "interview-platform-access-token")
-                .signWith(rsaKeys.privateKey(), SignatureAlgorithm.RS256)
+                .claims(extraClaims)
+                .subject(userDetails.getUsername())
+                .id(UUID.randomUUID().toString())
+                .issuedAt(new Date())
+                .expiration(new Date(currentTimeMillis() + jwtExpiration))
+                .header().add("access_token", "interview-platform-access-token").and()
+                .signWith(rsaKeys.privateKey())
                 .compact();
     }
 
@@ -83,12 +82,12 @@ public class JwtService {
      */
     public String generateRefreshToken(UserDetails userDetails) {
         return Jwts.builder()
-                .setSubject(userDetails.getUsername())
-                .setId(UUID.randomUUID().toString())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtRefreshExpiration))
+                .subject(userDetails.getUsername())
+                .id(UUID.randomUUID().toString())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + jwtRefreshExpiration))
                 .claim("type", "refresh")
-                .signWith(getRefreshSigningKey(), SignatureAlgorithm.HS256)
+                .signWith(getRefreshSigningKey())
                 .compact();
     }
 
@@ -129,14 +128,14 @@ public class JwtService {
      * Access tokens are verified with the RSA public key.
      */
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(rsaKeys.publicKey())
+        return Jwts.parser()
+                .verifyWith(rsaKeys.publicKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
-    private Key getRefreshSigningKey() {
+    private SecretKey getRefreshSigningKey() {
         byte[] keyBytes = jwtRefreshSecret.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
     }

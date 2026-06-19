@@ -29,7 +29,10 @@ jobs:
           cache: 'maven'
 
       - name: Build and run unit tests
-        run: ./mvnw verify -DskipIntegrationTests -B
+        run: ./mvnw verify -DskipIntegrationTests -Dspring.profiles.active=test -B
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          KAFKA_LISTENER_AUTOSTART: 'false'
 
       - name: Upload test results
         if: always()
