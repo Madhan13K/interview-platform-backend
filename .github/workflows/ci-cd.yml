@@ -110,10 +110,11 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          ORG_KEY=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           ./mvnw verify sonar:sonar \
             -DskipTests \
-            -Dsonar.projectKey=${{ github.repository_owner }}_interview-platform-backend \
-            -Dsonar.organization=${{ github.repository_owner }} \
+            -Dsonar.projectKey=${ORG_KEY}_interview-platform-backend \
+            -Dsonar.organization=${ORG_KEY} \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.java.coveragePlugin=jacoco \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
