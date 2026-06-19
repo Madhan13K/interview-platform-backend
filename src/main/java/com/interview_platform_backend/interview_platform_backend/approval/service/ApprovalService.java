@@ -216,29 +216,33 @@ public class ApprovalService {
         List<ApprovalDecision> existingDecisions = decisionRepository.findByRequestId(request.getId());
 
         if (chain.getApprovalMode() == ApprovalMode.SEQUENTIAL) {
-            // Find the next step that hasn't been decided
-            for (ApprovalStep step : steps) {
-                boolean decided = existingDecisions.stream()
-                        .anyMatch(d -> d.getStep().getId().equals(step.getId()));
-                if (!decided) {
-                    // Check if this approver matches the step
-                    if (isApproverForStep(step, approver)) {
-                        return step;
-                    }
-                    break; // Sequential: must wait for this step
-                }
+            return findSequentialStep(steps, existingDecisions, approver);
+        }
+        return findParallelStep(steps, existingDecisions, approver);
+    }
+
+    private ApprovalStep findSequentialStep(List<ApprovalStep> steps, List<ApprovalDecision> decisions, User approver) {
+        for (ApprovalStep step : steps) {
+            if (isStepDecided(step, decisions)) {
+                continue;
             }
-        } else {
-            // PARALLEL or ANY_ONE: any undecided step the approver qualifies for
-            for (ApprovalStep step : steps) {
-                boolean decided = existingDecisions.stream()
-                        .anyMatch(d -> d.getStep().getId().equals(step.getId()));
-                if (!decided && isApproverForStep(step, approver)) {
-                    return step;
-                }
+            // Sequential: this is the next pending step
+            return isApproverForStep(step, approver) ? step : null;
+        }
+        return null;
+    }
+
+    private ApprovalStep findParallelStep(List<ApprovalStep> steps, List<ApprovalDecision> decisions, User approver) {
+        for (ApprovalStep step : steps) {
+            if (!isStepDecided(step, decisions) && isApproverForStep(step, approver)) {
+                return step;
             }
         }
         return null;
+    }
+
+    private boolean isStepDecided(ApprovalStep step, List<ApprovalDecision> decisions) {
+        return decisions.stream().anyMatch(d -> d.getStep().getId().equals(step.getId()));
     }
 
     private boolean isApproverForStep(ApprovalStep step, User approver) {
