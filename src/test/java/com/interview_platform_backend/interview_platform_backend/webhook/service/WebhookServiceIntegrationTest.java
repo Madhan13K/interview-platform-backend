@@ -1,5 +1,7 @@
 package com.interview_platform_backend.interview_platform_backend.webhook.service;
 
+import com.interview_platform_backend.interview_platform_backend.AbstractIntegrationTest;
+
 import com.interview_platform_backend.interview_platform_backend.exception.ResourceNotFoundException;
 import com.interview_platform_backend.interview_platform_backend.user.dto.response.PaginatedResponse;
 import com.interview_platform_backend.interview_platform_backend.user.entity.User;
@@ -23,9 +25,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("integration")
 @Transactional
-class WebhookServiceIntegrationTest {
+class WebhookServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private WebhookService webhookService;

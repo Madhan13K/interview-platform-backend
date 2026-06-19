@@ -1,5 +1,7 @@
 package com.interview_platform_backend.interview_platform_backend.security;
 
+import com.interview_platform_backend.interview_platform_backend.AbstractIntegrationTest;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interview_platform_backend.interview_platform_backend.security.auth.dto.LoginRequest;
 import com.interview_platform_backend.interview_platform_backend.security.auth.dto.RegisterRequest;
@@ -28,10 +30,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
+@ActiveProfiles("integration")
 @Transactional
 @TestMethodOrder(MethodOrderer.MethodName.class)
-class AuthIntegrationTest {
+class AuthIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;

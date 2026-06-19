@@ -1,5 +1,7 @@
 package com.interview_platform_backend.interview_platform_backend.scorecard.service;
 
+import com.interview_platform_backend.interview_platform_backend.AbstractIntegrationTest;
+
 import com.interview_platform_backend.interview_platform_backend.candidate.dto.CreateInterviewRequest;
 import com.interview_platform_backend.interview_platform_backend.candidate.dto.InterviewResponse;
 import com.interview_platform_backend.interview_platform_backend.candidate.entity.*;
@@ -29,9 +31,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("integration")
 @Transactional
-class EvaluationScorecardServiceIntegrationTest {
+class EvaluationScorecardServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private EvaluationScorecardService scorecardService;

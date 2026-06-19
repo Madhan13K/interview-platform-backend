@@ -32,7 +32,7 @@
 //@AutoConfigureMockMvc
 //@ActiveProfiles("integration")
 //@org.springframework.context.annotation.Import(TestObjectMapperConfig.class)
-//class ForgotPasswordFlowIntegrationTest {
+//class ForgotPasswordFlowIntegrationTest extends AbstractIntegrationTest {
 //
 //    @MockitoBean
 //    @SuppressWarnings("unused")

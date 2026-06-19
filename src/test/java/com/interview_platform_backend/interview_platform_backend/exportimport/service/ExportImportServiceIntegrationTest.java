@@ -1,5 +1,7 @@
 package com.interview_platform_backend.interview_platform_backend.exportimport.service;
 
+import com.interview_platform_backend.interview_platform_backend.AbstractIntegrationTest;
+
 import com.interview_platform_backend.interview_platform_backend.document.service.S3StorageService;
 import com.interview_platform_backend.interview_platform_backend.exception.BadRequestException;
 import com.interview_platform_backend.interview_platform_backend.exception.ResourceNotFoundException;
@@ -31,9 +33,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("integration")
 @Transactional
-class ExportImportServiceIntegrationTest {
+class ExportImportServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private ExportImportService exportImportService;

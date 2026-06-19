@@ -68,6 +68,7 @@ jobs:
         run: ./mvnw verify -PintegrationTests -B
         env:
           TESTCONTAINERS_RYUK_DISABLED: 'false'
+          SPRING_PROFILES_ACTIVE: integration
 
       - name: Upload integration test results
         if: always()

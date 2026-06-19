@@ -1,5 +1,7 @@
 package com.interview_platform_backend.interview_platform_backend.ai.service;
 
+import com.interview_platform_backend.interview_platform_backend.AbstractIntegrationTest;
+
 import com.interview_platform_backend.interview_platform_backend.ai.dto.*;
 import com.interview_platform_backend.interview_platform_backend.ai.entity.AiSuggestion;
 import com.interview_platform_backend.interview_platform_backend.ai.entity.AiSuggestion.AiSuggestionStatus;
@@ -28,9 +30,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("integration")
 @Transactional
-class AiServiceIntegrationTest {
+class AiServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private AiService aiService;

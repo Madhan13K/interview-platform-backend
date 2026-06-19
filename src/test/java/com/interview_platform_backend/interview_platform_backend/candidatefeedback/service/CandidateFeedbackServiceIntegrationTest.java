@@ -1,5 +1,7 @@
 package com.interview_platform_backend.interview_platform_backend.candidatefeedback.service;
 
+import com.interview_platform_backend.interview_platform_backend.AbstractIntegrationTest;
+
 import com.interview_platform_backend.interview_platform_backend.candidate.entity.*;
 import com.interview_platform_backend.interview_platform_backend.candidate.repository.InterviewRepository;
 import com.interview_platform_backend.interview_platform_backend.candidatefeedback.dto.CandidateFeedbackResponse;
@@ -29,9 +31,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("integration")
 @Transactional
-class CandidateFeedbackServiceIntegrationTest {
+class CandidateFeedbackServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private CandidateFeedbackService candidateFeedbackService;
