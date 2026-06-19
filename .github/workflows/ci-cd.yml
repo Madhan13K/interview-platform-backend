@@ -110,8 +110,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./mvnw verify sonar:sonar \
-            -DskipTests \
+          ./mvnw compile sonar:sonar \
+            -Dmaven.test.skip=true \
             -Dsonar.projectKey=madhan13k_interview-platform-backend \
             -Dsonar.organization=madhan13k \
             -Dsonar.host.url=https://sonarcloud.io \
