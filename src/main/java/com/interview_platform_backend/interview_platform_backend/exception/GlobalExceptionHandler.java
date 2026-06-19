@@ -33,49 +33,49 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleResourceNotFound(
             ResourceNotFoundException ex, HttpServletRequest request) {
         log.error("Resource not found: {}", ex.getMessage(), ex);
-        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+        return buildResponse(HttpStatus.NOT_FOUND, "ERR_NOT_FOUND", ex.getMessage(), request);
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateResource(
             DuplicateResourceException ex, HttpServletRequest request) {
         log.error("Duplicate resource: {}", ex.getMessage(), ex);
-        return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
+        return buildResponse(HttpStatus.CONFLICT, "ERR_DUPLICATE", ex.getMessage(), request);
     }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(
             BadRequestException ex, HttpServletRequest request) {
         log.error("Bad request: {}", ex.getMessage(), ex);
-        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+        return buildResponse(HttpStatus.BAD_REQUEST, "ERR_BAD_REQUEST", ex.getMessage(), request);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorized(
             UnauthorizedException ex, HttpServletRequest request) {
         log.error("Unauthorized: {}", ex.getMessage(), ex);
-        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
+        return buildResponse(HttpStatus.UNAUTHORIZED, "ERR_AUTH_001", ex.getMessage(), request);
     }
 
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ErrorResponse> handleForbidden(
             ForbiddenException ex, HttpServletRequest request) {
         log.error("Forbidden: {}", ex.getMessage(), ex);
-        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
+        return buildResponse(HttpStatus.FORBIDDEN, "ERR_FORBIDDEN", ex.getMessage(), request);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(
             BadCredentialsException ex, HttpServletRequest request) {
         log.error("Bad credentials attempt", ex);
-        return buildResponse(HttpStatus.UNAUTHORIZED, "Invalid email or password", request);
+        return buildResponse(HttpStatus.UNAUTHORIZED, "ERR_AUTH_002", "Invalid email or password", request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(
             AccessDeniedException ex, HttpServletRequest request) {
         log.error("Access denied: {}", ex.getMessage(), ex);
-        return buildResponse(HttpStatus.FORBIDDEN, "Access denied: insufficient permissions", request);
+        return buildResponse(HttpStatus.FORBIDDEN, "ERR_ACCESS_DENIED", "Access denied: insufficient permissions", request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -85,7 +85,7 @@ public class GlobalExceptionHandler {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining(", "));
-        return buildResponse(HttpStatus.BAD_REQUEST, message, request);
+        return buildResponse(HttpStatus.BAD_REQUEST, "ERR_VALIDATION", message, request);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -95,7 +95,7 @@ public class GlobalExceptionHandler {
         String message = ex.getConstraintViolations().stream()
                 .map(v -> v.getPropertyPath() + ": " + v.getMessage())
                 .collect(Collectors.joining(", "));
-        return buildResponse(HttpStatus.BAD_REQUEST, message, request);
+        return buildResponse(HttpStatus.BAD_REQUEST, "ERR_CONSTRAINT", message, request);
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
@@ -103,7 +103,7 @@ public class GlobalExceptionHandler {
             MissingServletRequestParameterException ex, HttpServletRequest request) {
         log.error("Missing request parameter: {}", ex.getMessage(), ex);
         String message = "Required parameter '" + ex.getParameterName() + "' is missing";
-        return buildResponse(HttpStatus.BAD_REQUEST, message, request);
+        return buildResponse(HttpStatus.BAD_REQUEST, "ERR_MISSING_PARAM", message, request);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -112,7 +112,7 @@ public class GlobalExceptionHandler {
         log.error("Type mismatch: {}", ex.getMessage(), ex);
         String message = "Parameter '" + ex.getName() + "' must be of type "
                 + (ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown");
-        return buildResponse(HttpStatus.BAD_REQUEST, message, request);
+        return buildResponse(HttpStatus.BAD_REQUEST, "ERR_TYPE_MISMATCH", message, request);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
@@ -120,7 +120,7 @@ public class GlobalExceptionHandler {
             HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
         log.error("Method not supported: {}", ex.getMessage(), ex);
         String message = "HTTP method '" + ex.getMethod() + "' is not supported for this endpoint";
-        return buildResponse(HttpStatus.METHOD_NOT_ALLOWED, message, request);
+        return buildResponse(HttpStatus.METHOD_NOT_ALLOWED, "ERR_METHOD_NOT_ALLOWED", message, request);
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
@@ -128,28 +128,28 @@ public class GlobalExceptionHandler {
             NoHandlerFoundException ex, HttpServletRequest request) {
         log.error("No handler found: {}", ex.getMessage(), ex);
         String message = "No endpoint found for " + ex.getHttpMethod() + " " + ex.getRequestURL();
-        return buildResponse(HttpStatus.NOT_FOUND, message, request);
+        return buildResponse(HttpStatus.NOT_FOUND, "ERR_ENDPOINT_NOT_FOUND", message, request);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
             DataIntegrityViolationException ex, HttpServletRequest request) {
         log.error("Data integrity violation", ex);
-        return buildResponse(HttpStatus.CONFLICT, "Data conflict: a unique constraint was violated", request);
+        return buildResponse(HttpStatus.CONFLICT, "ERR_DATA_CONFLICT", "Data conflict: a unique constraint was violated", request);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
             HttpMessageNotReadableException ex, HttpServletRequest request) {
         log.error("Message not readable: {}", ex.getMessage(), ex);
-        return buildResponse(HttpStatus.BAD_REQUEST, "Malformed request body", request);
+        return buildResponse(HttpStatus.BAD_REQUEST, "ERR_MALFORMED_BODY", "Malformed request body", request);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(
             MaxUploadSizeExceededException ex, HttpServletRequest request) {
         log.error("Max upload size exceeded", ex);
-        return buildResponse(HttpStatus.BAD_REQUEST,
+        return buildResponse(HttpStatus.BAD_REQUEST, "ERR_FILE_TOO_LARGE",
                 "File size exceeds the maximum allowed upload size (50MB)", request);
     }
 
@@ -157,36 +157,37 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMultipartException(
             MultipartException ex, HttpServletRequest request) {
         log.error("Multipart exception", ex);
-        return buildResponse(HttpStatus.BAD_REQUEST, "File upload error", request);
+        return buildResponse(HttpStatus.BAD_REQUEST, "ERR_FILE_UPLOAD", "File upload error", request);
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalState(
             IllegalStateException ex, HttpServletRequest request) {
         log.error("Illegal state: {}", ex.getMessage(), ex);
-        return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
+        return buildResponse(HttpStatus.CONFLICT, "ERR_ILLEGAL_STATE", ex.getMessage(), request);
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(
             RuntimeException ex, HttpServletRequest request) {
         log.error("Unhandled runtime exception", ex);
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An internal error occurred", request);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "ERR_INTERNAL", "An internal error occurred", request);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, HttpServletRequest request) {
         log.error("Unhandled exception", ex);
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "ERR_UNEXPECTED",
                 "An unexpected error occurred", request);
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(
-            HttpStatus status, String message, HttpServletRequest request) {
+            HttpStatus status, String errorCode, String message, HttpServletRequest request) {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(status.value())
                 .error(status.getReasonPhrase())
+                .errorCode(errorCode)
                 .message(message)
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())

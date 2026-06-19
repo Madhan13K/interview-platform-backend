@@ -1,5 +1,7 @@
 package com.interview_platform_backend.interview_platform_backend.video.service;
 
+import com.interview_platform_backend.interview_platform_backend.AbstractIntegrationTest;
+
 import com.interview_platform_backend.interview_platform_backend.candidate.entity.Interview;
 import com.interview_platform_backend.interview_platform_backend.candidate.entity.InterviewMode;
 import com.interview_platform_backend.interview_platform_backend.candidate.entity.InterviewStatus;
@@ -39,9 +41,9 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("integration")
 @Transactional
-class VideoRecordingServiceIntegrationTest {
+class VideoRecordingServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private VideoRecordingService videoRecordingService;

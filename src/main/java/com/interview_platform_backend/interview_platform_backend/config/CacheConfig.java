@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
@@ -45,6 +46,7 @@ public class CacheConfig {
 
     @Bean
     @Primary
+    @ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis", matchIfMissing = true)
     public CacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
         Jackson2JsonRedisSerializer<Object> serializer = jsonRedisSerializer();
         
@@ -90,6 +92,18 @@ public class CacheConfig {
     }
 
     @Bean("caffeineCacheManager")
+    @ConditionalOnProperty(name = "spring.cache.type", havingValue = "none")
+    @Primary
+    public CacheManager caffeineCacheManagerPrimary() {
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+        cacheManager.setCaffeine(Caffeine.newBuilder()
+                .maximumSize(100)
+                .expireAfterWrite(5, TimeUnit.MINUTES));
+        return cacheManager;
+    }
+
+    @Bean("caffeineCacheManagerLocal")
+    @ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis", matchIfMissing = true)
     public CacheManager caffeineCacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager(
                 "localRoles", "localPermissions"
@@ -102,6 +116,7 @@ public class CacheConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis", matchIfMissing = true)
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         Jackson2JsonRedisSerializer<Object> serializer = jsonRedisSerializer();
         RedisTemplate<String, Object> template = new RedisTemplate<>();

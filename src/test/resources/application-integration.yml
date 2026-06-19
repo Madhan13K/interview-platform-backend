@@ -1,0 +1,114 @@
+# Integration test profile - used with Testcontainers
+# Database and Kafka are provided by Testcontainers via @DynamicPropertySource
+spring:
+  application:
+    name: interview-platform-backend-test
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    open-in-view: false
+
+  flyway:
+    enabled: false
+
+  docker:
+    compose:
+      enabled: false
+
+  kafka:
+    listener:
+      auto-startup: false
+
+  cache:
+    type: none
+
+  mail:
+    host: smtp.test.com
+    port: 587
+    username: test@test.com
+    password: test
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-google-client-id
+            client-secret: test-google-client-secret
+            scope: [openid, profile, email]
+            redirect-uri: "http://localhost:8080/login/oauth2/code/google"
+          github:
+            client-id: test-github-client-id
+            client-secret: test-github-client-secret
+            scope: [user:email, read:user]
+            redirect-uri: "http://localhost:8080/login/oauth2/code/github"
+          microsoft:
+            client-id: test-microsoft-client-id
+            client-secret: test-microsoft-client-secret
+            scope: [openid, profile, email]
+            redirect-uri: "http://localhost:8080/login/oauth2/code/microsoft"
+            client-name: Microsoft
+            authorization-grant-type: authorization_code
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://openidconnect.googleapis.com/v1/userinfo
+            user-name-attribute: email
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
+            user-name-attribute: login
+          microsoft:
+            authorization-uri: https://login.microsoftonline.com/common/oauth2/v2.0/authorize
+            token-uri: https://login.microsoftonline.com/common/oauth2/v2.0/token
+            user-info-uri: https://graph.microsoft.com/v1.0/me
+            user-name-attribute: id
+
+server:
+  port: 0
+
+jwt:
+  secret: test-jwt-secret-key-for-testing-purposes-only-minimum-256-bits-long
+  expiration: 86400000
+  refresh-secret: test-jwt-refresh-secret-key-for-testing-purposes-only-min-256-bits
+  refresh-expiration: 1209600000
+
+rsa:
+  public-key: classpath:certs/public.pem
+  private-key: classpath:certs/private.pem
+
+management:
+  tracing:
+    enabled: false
+    sampling:
+      probability: 0.0
+
+logging:
+  level:
+    root: WARN
+    com.interview_platform_backend: INFO
+    org.testcontainers: INFO
+
+app:
+  oauth2:
+    redirect-uri: http://localhost:3000/oauth2/callback
+  cors:
+    allowed-origins: http://localhost:3000
+  kafka:
+    enabled: false
+  notifications:
+    enabled: false
+  sms:
+    enabled: false
+    provider: log
+  encryption:
+    enabled: false
+  code-execution:
+    enabled: false
+  auth:
+    reset-password-base-url: http://localhost:3000/reset-password
+    verification-base-url: http://localhost:3000/verify-email

@@ -1,5 +1,7 @@
 package com.interview_platform_backend.interview_platform_backend.user.service;
 
+import com.interview_platform_backend.interview_platform_backend.AbstractIntegrationTest;
+
 import com.interview_platform_backend.interview_platform_backend.exception.DuplicateResourceException;
 import com.interview_platform_backend.interview_platform_backend.exception.ResourceNotFoundException;
 import com.interview_platform_backend.interview_platform_backend.user.dto.request.CreateRoleRequest;
@@ -20,9 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("integration")
 @Transactional
-class RoleServiceIntegrationTest {
+class RoleServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private RoleService roleService;

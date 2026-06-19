@@ -1,5 +1,7 @@
 package com.interview_platform_backend.interview_platform_backend.candidate.service;
 
+import com.interview_platform_backend.interview_platform_backend.AbstractIntegrationTest;
+
 import com.interview_platform_backend.interview_platform_backend.candidate.dto.*;
 import com.interview_platform_backend.interview_platform_backend.candidate.entity.*;
 import com.interview_platform_backend.interview_platform_backend.exception.BadRequestException;
@@ -27,9 +29,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("integration")
 @Transactional
-class InterviewServiceIntegrationTest {
+class InterviewServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private InterviewService interviewService;

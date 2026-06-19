@@ -988,3 +988,576 @@ Tables created:
 
 Indexes: 14 new indexes for performance on common query patterns.
 
+---
+
+## Phase 5-6 — Execution & Scheduling Entities
+
+### Job Position Domain (V15)
+
+```
+┌─────────────────────────────────┐
+│         JobPosition             │
+├─────────────────────────────────┤
+│ id: UUID (PK)                   │
+│ title: VARCHAR(300)             │
+│ department: VARCHAR(200)        │
+│ location: VARCHAR(300)          │
+│ employment_type: ENUM           │
+│ experience_level: ENUM          │
+│ status: ENUM                    │
+│ description: TEXT               │
+│ requirements: TEXT              │
+│ responsibilities: TEXT          │
+│ salary_min: DECIMAL(12,2)       │
+│ salary_max: DECIMAL(12,2)       │
+│ salary_currency: VARCHAR(10)    │
+│ number_of_openings: INTEGER     │
+│ number_hired: INTEGER           │
+│ pipeline_id: UUID (FK)          │
+│ created_by: UUID (FK→User)      │
+│ hiring_manager_id: UUID (FK)    │
+│ skills: TEXT                    │
+│ posted_at: TIMESTAMPTZ          │
+│ closed_at: TIMESTAMPTZ          │
+│ deadline: TIMESTAMPTZ           │
+│ created_at: TIMESTAMPTZ         │
+│ updated_at: TIMESTAMPTZ         │
+└─────────────────────────────────┘
+```
+
+### Scheduling Domain (V16)
+
+```
+┌──────────────────────────┐       ┌──────────────────────────────┐
+│    AvailabilitySlot      │       │    InterviewReminder         │
+├──────────────────────────┤       ├──────────────────────────────┤
+│ id: UUID (PK)            │       │ id: UUID (PK)                │
+│ user_id: UUID (FK→User)  │       │ interview_id: UUID (FK)      │
+│ day_of_week: INTEGER     │       │ recipient_id: UUID (FK→User) │
+│ start_time: TIME         │       │ type: BEFORE_24H|BEFORE_1H|  │
+│ end_time: TIME           │       │       BEFORE_15MIN           │
+│ time_zone: VARCHAR(50)   │       │ status: PENDING|SENT|FAILED| │
+│ is_recurring: BOOLEAN    │       │         CANCELLED            │
+│ specific_date: DATE      │       │ scheduled_for: TIMESTAMPTZ   │
+│ created_at: TIMESTAMPTZ  │       │ sent_at: TIMESTAMPTZ         │
+└──────────────────────────┘       │ created_at: TIMESTAMPTZ      │
+                                   └──────────────────────────────┘
+
+┌──────────────────────────────────┐
+│     CandidatePreferredSlot       │
+├──────────────────────────────────┤
+│ id: UUID (PK)                    │
+│ candidate_id: UUID (FK→User)     │
+│ interview_id: UUID (FK, nullable)│
+│ job_position_id: UUID (FK, null) │
+│ preferred_date: DATE             │
+│ start_time: TIME                 │
+│ end_time: TIME                   │
+│ time_zone: VARCHAR(50)           │
+│ priority: INTEGER                │
+│ status: PENDING|ACCEPTED|REJECTED│
+│ notes: TEXT                      │
+│ created_at: TIMESTAMPTZ          │
+└──────────────────────────────────┘
+```
+
+### Team Domain (V16)
+
+```
+┌──────────────────────────┐       ┌──────────────────────────┐
+│          Team            │       │       TeamMember         │
+├──────────────────────────┤       ├──────────────────────────┤
+│ id: UUID (PK)            │       │ id: UUID (PK)            │
+│ name: VARCHAR(200)       │◀──────│ team_id: UUID (FK)       │
+│ description: TEXT        │       │ user_id: UUID (FK→User)  │
+│ department: VARCHAR(100) │       │ role: LEAD|MEMBER|       │
+│ manager_id: UUID (FK)    │       │       OBSERVER           │
+│ is_active: BOOLEAN       │       │ joined_at: TIMESTAMPTZ   │
+│ created_at: TIMESTAMPTZ  │       └──────────────────────────┘
+│ updated_at: TIMESTAMPTZ  │
+└──────────────────────────┘
+```
+
+### Tag Domain (V16)
+
+```
+┌──────────────────────────┐       ┌──────────────────────────┐
+│          Tag             │       │       EntityTag          │
+├──────────────────────────┤       ├──────────────────────────┤
+│ id: UUID (PK)            │       │ id: UUID (PK)            │
+│ name: VARCHAR(100) UQ    │◀──────│ tag_id: UUID (FK)        │
+│ color: VARCHAR(20)       │       │ entity_type: VARCHAR(50) │
+│ category: VARCHAR(50)    │       │ entity_id: UUID          │
+│ created_by: UUID (FK)    │       │ created_at: TIMESTAMPTZ  │
+│ created_at: TIMESTAMPTZ  │       │ UQ(tag_id, entity_type,  │
+└──────────────────────────┘       │    entity_id)            │
+                                   └──────────────────────────┘
+```
+
+---
+
+## Phase 8 — Security & Enterprise Entities
+
+### Code Execution Domain (V19)
+
+```
+┌─────────────────────────────────┐
+│        CodeExecution            │
+├─────────────────────────────────┤
+│ id: UUID (PK)                   │
+│ coding_session_id: UUID (FK)    │
+│ user_id: UUID (FK→User)         │
+│ language: ENUM (SupportedLang)  │
+│ source_code: TEXT               │
+│ stdin: TEXT                     │
+│ stdout: TEXT                    │
+│ stderr: TEXT                    │
+│ exit_code: INTEGER              │
+│ status: ENUM (ExecutionStatus)  │
+│ timeout_ms: INTEGER             │
+│ execution_time_ms: LONG         │
+│ memory_used_bytes: LONG         │
+│ container_id: VARCHAR(100)      │
+│ error_message: TEXT             │
+│ created_at: TIMESTAMPTZ         │
+│ completed_at: TIMESTAMPTZ       │
+└─────────────────────────────────┘
+```
+
+### SSO/SAML Domain (V20)
+
+```
+┌─────────────────────────────────┐
+│       SsoConfiguration          │
+├─────────────────────────────────┤
+│ id: UUID (PK)                   │
+│ tenant_id: UUID (FK→Org)        │
+│ provider_type: ENUM             │
+│ registration_id: VARCHAR(100) UQ│
+│ entity_id: VARCHAR(500)         │
+│ sso_url: VARCHAR(500)           │
+│ certificate: TEXT               │
+│ metadata_url: VARCHAR(500)      │
+│ sp_entity_id: VARCHAR(200)      │
+│ acs_url: VARCHAR(500)           │
+│ sign_requests: BOOLEAN          │
+│ enabled: BOOLEAN                │
+│ created_by: UUID (FK→User)      │
+│ created_at: TIMESTAMPTZ         │
+│ updated_at: TIMESTAMPTZ         │
+└─────────────────────────────────┘
+```
+
+### Account Lockout Domain (V21)
+
+```
+┌──────────────────────────────┐  ┌──────────────────────────────┐
+│      AccountLockout          │  │       LoginAttempt           │
+├──────────────────────────────┤  ├──────────────────────────────┤
+│ id: UUID (PK)                │  │ id: UUID (PK)                │
+│ email: VARCHAR(255) UQ       │  │ email: VARCHAR(255)          │
+│ failed_attempts: INTEGER     │  │ ip_address: VARCHAR(45)      │
+│ locked: BOOLEAN              │  │ user_agent: TEXT             │
+│ locked_at: TIMESTAMPTZ       │  │ success: BOOLEAN             │
+│ lock_expires_at: TIMESTAMPTZ │  │ failure_reason: VARCHAR(200) │
+│ last_failed_at: TIMESTAMPTZ  │  │ attempted_at: TIMESTAMPTZ    │
+│ created_at: TIMESTAMPTZ      │  └──────────────────────────────┘
+│ updated_at: TIMESTAMPTZ      │
+└──────────────────────────────┘  ┌──────────────────────────────┐
+                                  │       IpBlocklist            │
+                                  ├──────────────────────────────┤
+                                  │ id: UUID (PK)                │
+                                  │ ip_address: VARCHAR(45) UQ   │
+                                  │ reason: VARCHAR(500)         │
+                                  │ blocked_at: TIMESTAMPTZ      │
+                                  │ expires_at: TIMESTAMPTZ      │
+                                  │ blocked_by: VARCHAR(255)     │
+                                  └──────────────────────────────┘
+```
+
+### MFA Domain (V18)
+
+```
+┌─────────────────────────────────┐
+│           UserMfa               │
+├─────────────────────────────────┤
+│ id: UUID (PK)                   │
+│ user_id: UUID (FK→User) UQ     │
+│ secret: VARCHAR(200)            │
+│ enabled: BOOLEAN                │
+│ verified: BOOLEAN               │
+│ recovery_codes: TEXT            │
+│ created_at: TIMESTAMPTZ         │
+│ updated_at: TIMESTAMPTZ         │
+└─────────────────────────────────┘
+```
+
+### API Key Domain (V18)
+
+```
+┌─────────────────────────────────┐
+│           ApiKey                │
+├─────────────────────────────────┤
+│ id: UUID (PK)                   │
+│ user_id: UUID (FK→User)         │
+│ name: VARCHAR(200)              │
+│ key_hash: VARCHAR(500) UQ       │
+│ key_prefix: VARCHAR(20)         │
+│ scopes: TEXT[]                  │
+│ is_active: BOOLEAN              │
+│ expires_at: TIMESTAMPTZ         │
+│ last_used_at: TIMESTAMPTZ       │
+│ created_at: TIMESTAMPTZ         │
+└─────────────────────────────────┘
+```
+
+### GDPR Domain (V18)
+
+```
+┌──────────────────────────────┐  ┌──────────────────────────────┐
+│       UserConsent            │  │    DataErasureRequest        │
+├──────────────────────────────┤  ├──────────────────────────────┤
+│ id: UUID (PK)                │  │ id: UUID (PK)                │
+│ user_id: UUID (FK→User)      │  │ user_id: UUID (FK→User)      │
+│ consent_type: VARCHAR(100)   │  │ reason: TEXT                 │
+│ granted: BOOLEAN             │  │ status: PENDING|PROCESSING|  │
+│ details: TEXT                │  │         COMPLETED|REJECTED   │
+│ ip_address: VARCHAR(45)      │  │ requested_at: TIMESTAMPTZ    │
+│ granted_at: TIMESTAMPTZ      │  │ processed_at: TIMESTAMPTZ    │
+│ revoked_at: TIMESTAMPTZ      │  │ processed_by: UUID (FK)      │
+│ created_at: TIMESTAMPTZ      │  │ notes: TEXT                  │
+└──────────────────────────────┘  └──────────────────────────────┘
+```
+
+---
+
+## Phase 9 — Job Board, Offers, Calendar Sync
+
+### Job Board / Application Domain (V23)
+
+```
+┌─────────────────────────────────┐
+│        JobApplication           │
+├─────────────────────────────────┤
+│ id: UUID (PK)                   │
+│ job_position_id: UUID (FK)      │
+│ candidate_id: UUID (FK→User)    │
+│ status: ENUM (ApplicationStatus)│
+│ source: ENUM (ApplicationSource)│
+│ cover_letter: TEXT              │
+│ resume_document_id: UUID (FK)   │
+│ notes: TEXT                     │
+│ applied_at: TIMESTAMPTZ         │
+│ reviewed_at: TIMESTAMPTZ        │
+│ updated_at: TIMESTAMPTZ         │
+│ UQ(job_position_id, candidate)  │
+└─────────────────────────────────┘
+```
+
+### Offer Letter Domain (V24)
+
+```
+┌─────────────────────────────────┐       ┌─────────────────────────────┐
+│        OfferLetter              │       │      OfferApproval          │
+├─────────────────────────────────┤       ├─────────────────────────────┤
+│ id: UUID (PK)                   │       │ id: UUID (PK)               │
+│ candidate_id: UUID (FK→User)    │       │ offer_id: UUID (FK)         │
+│ job_position_id: UUID (FK)      │◀──────│ approver_id: UUID (FK→User) │
+│ created_by: UUID (FK→User)      │       │ status: ENUM                │
+│ salary: DECIMAL(12,2)           │       │ comments: TEXT              │
+│ currency: VARCHAR(10)           │       │ order_index: INTEGER        │
+│ start_date: DATE                │       │ decided_at: TIMESTAMPTZ     │
+│ expiry_date: DATE               │       │ created_at: TIMESTAMPTZ     │
+│ benefits: TEXT                  │       └─────────────────────────────┘
+│ notes: TEXT                     │
+│ status: ENUM (OfferStatus)      │
+│ esignature_status: ENUM         │
+│ esignature_provider: ENUM       │
+│ esignature_request_id: VARCHAR  │
+│ sent_at: TIMESTAMPTZ            │
+│ viewed_at: TIMESTAMPTZ          │
+│ responded_at: TIMESTAMPTZ       │
+│ candidate_comments: TEXT        │
+│ created_at: TIMESTAMPTZ         │
+│ updated_at: TIMESTAMPTZ         │
+└─────────────────────────────────┘
+```
+
+### Calendar Sync Domain (V25)
+
+```
+┌──────────────────────────────┐       ┌──────────────────────────────┐
+│    CalendarConnection        │       │      CalendarEvent           │
+├──────────────────────────────┤       ├──────────────────────────────┤
+│ id: UUID (PK)                │       │ id: UUID (PK)                │
+│ user_id: UUID (FK→User)      │       │ connection_id: UUID (FK)     │
+│ provider: ENUM (CalProvider) │◀──────│ interview_id: UUID (FK)      │
+│ access_token: TEXT           │       │ external_event_id: VARCHAR   │
+│ refresh_token: TEXT          │       │ title: VARCHAR(300)          │
+│ token_expires_at: TIMESTAMPTZ│       │ start_time: TIMESTAMPTZ      │
+│ calendar_id: VARCHAR(200)    │       │ end_time: TIMESTAMPTZ        │
+│ sync_direction: ENUM         │       │ sync_direction: ENUM         │
+│ is_active: BOOLEAN           │       │ last_synced_at: TIMESTAMPTZ  │
+│ last_synced_at: TIMESTAMPTZ  │       │ created_at: TIMESTAMPTZ      │
+│ created_at: TIMESTAMPTZ      │       └──────────────────────────────┘
+└──────────────────────────────┘
+```
+
+---
+
+## Phase 10 — Workflow, Approvals, Referrals, DEI, Source Tracking
+
+### Workflow Domain (V26+)
+
+```
+┌──────────────────────────────────┐       ┌──────────────────────────────┐
+│        WorkflowRule              │       │     WorkflowExecution        │
+├──────────────────────────────────┤       ├──────────────────────────────┤
+│ id: UUID (PK)                    │       │ id: UUID (PK)                │
+│ organization_id: UUID (FK)       │       │ rule_id: UUID (FK)           │
+│ name: VARCHAR(200)               │◀──────│ trigger_entity_id: UUID      │
+│ description: TEXT                │       │ trigger_entity_type: VARCHAR  │
+│ trigger_event: ENUM              │       │ status: SUCCESS|FAILED|      │
+│ condition_type: ENUM             │       │         SKIPPED              │
+│ condition_value: VARCHAR(500)    │       │ result_message: TEXT         │
+│ action_type: ENUM                │       │ executed_at: TIMESTAMPTZ     │
+│ action_config: JSONB             │       │ created_at: TIMESTAMPTZ      │
+│ is_active: BOOLEAN               │       └──────────────────────────────┘
+│ priority: INTEGER                │
+│ created_by: UUID (FK→User)       │
+│ created_at: TIMESTAMPTZ          │
+│ updated_at: TIMESTAMPTZ          │
+└──────────────────────────────────┘
+```
+
+### Approval Domain (V26+)
+
+```
+┌───────────────────────────┐     ┌─────────────────────────┐
+│     ApprovalChain         │     │     ApprovalStep        │
+├───────────────────────────┤     ├─────────────────────────┤
+│ id: UUID (PK)             │     │ id: UUID (PK)           │
+│ organization_id: UUID(FK) │     │ chain_id: UUID (FK)     │
+│ name: VARCHAR(200)        │◀────│ approver_id: UUID (FK)  │
+│ entity_type: ENUM         │     │ order_index: INTEGER    │
+│ mode: ENUM (ApprovalMode) │     │ created_at: TIMESTAMPTZ │
+│ is_active: BOOLEAN        │     └─────────────────────────┘
+│ created_by: UUID (FK)     │
+│ created_at: TIMESTAMPTZ   │     ┌─────────────────────────────┐
+└───────────────────────────┘     │     ApprovalRequest         │
+                                  ├─────────────────────────────┤
+┌─────────────────────────────┐   │ id: UUID (PK)               │
+│     ApprovalDecision        │   │ chain_id: UUID (FK)         │
+├─────────────────────────────┤   │ entity_type: ENUM           │
+│ id: UUID (PK)               │   │ entity_id: UUID             │
+│ request_id: UUID (FK)       │   │ requester_id: UUID (FK)     │
+│ step_id: UUID (FK)          │   │ status: ENUM (ReqStatus)    │
+│ approver_id: UUID (FK)      │   │ notes: TEXT                 │
+│ approved: BOOLEAN           │   │ created_at: TIMESTAMPTZ     │
+│ comments: TEXT              │   │ completed_at: TIMESTAMPTZ   │
+│ decided_at: TIMESTAMPTZ     │   └─────────────────────────────┘
+└─────────────────────────────┘
+```
+
+### Referral Domain (V26+)
+
+```
+┌─────────────────────────────────┐
+│          Referral               │
+├─────────────────────────────────┤
+│ id: UUID (PK)                   │
+│ referrer_id: UUID (FK→User)     │
+│ candidate_email: VARCHAR(255)   │
+│ candidate_first_name: VARCHAR   │
+│ candidate_last_name: VARCHAR    │
+│ job_position_id: UUID (FK)      │
+│ relationship: VARCHAR(200)      │
+│ notes: TEXT                     │
+│ status: ENUM (ReferralStatus)   │
+│ bonus_amount: DECIMAL(10,2)     │
+│ bonus_paid: BOOLEAN             │
+│ created_at: TIMESTAMPTZ         │
+│ updated_at: TIMESTAMPTZ         │
+└─────────────────────────────────┘
+```
+
+### DEI Domain (V26+)
+
+```
+┌─────────────────────────────────┐
+│      DemographicProfile         │
+├─────────────────────────────────┤
+│ id: UUID (PK)                   │
+│ user_id: UUID (FK→User) UQ     │
+│ gender: ENUM (Gender)           │
+│ ethnicity: ENUM (Ethnicity)     │
+│ age_range: ENUM (AgeRange)      │
+│ veteran_status: BOOLEAN         │
+│ disability_status: BOOLEAN      │
+│ opt_in: BOOLEAN                 │
+│ created_at: TIMESTAMPTZ         │
+│ updated_at: TIMESTAMPTZ         │
+└─────────────────────────────────┘
+```
+
+### Source Tracking Domain (V26+)
+
+```
+┌─────────────────────────────────┐
+│       CandidateSource           │
+├─────────────────────────────────┤
+│ id: UUID (PK)                   │
+│ candidate_id: UUID (FK→User)    │
+│ source_type: ENUM (SourceType)  │
+│ source_name: VARCHAR(200)       │
+│ campaign: VARCHAR(200)          │
+│ cost: DECIMAL(10,2)             │
+│ referrer_id: UUID (FK, nullable)│
+│ created_at: TIMESTAMPTZ         │
+└─────────────────────────────────┘
+```
+
+---
+
+## Additional Enum Types (Phase 8-10)
+
+| Enum | Values |
+|------|--------|
+| JobPositionStatus | DRAFT, OPEN, ON_HOLD, CLOSED, FILLED, CANCELLED |
+| EmploymentType | FULL_TIME, PART_TIME, CONTRACT, INTERNSHIP, FREELANCE, TEMPORARY |
+| ExperienceLevel | ENTRY, JUNIOR, MID, SENIOR, LEAD, PRINCIPAL, EXECUTIVE |
+| ExecutionStatus | PENDING, RUNNING, COMPLETED, TIMEOUT, ERROR |
+| SupportedLanguage | JAVA, PYTHON, JAVASCRIPT, TYPESCRIPT, CPP, C, GO, RUST, RUBY, PHP |
+| SsoProviderType | OKTA, ONELOGIN, AZURE_AD, GENERIC |
+| ReminderType | BEFORE_24H, BEFORE_1H, BEFORE_15MIN |
+| ReminderStatus | PENDING, SENT, FAILED, CANCELLED |
+| TeamMemberRole | LEAD, MEMBER, OBSERVER |
+| TagCategory | INTERVIEW, CANDIDATE, QUESTION, JOB_POSITION, GENERAL |
+| ApplicationStatus | SUBMITTED, UNDER_REVIEW, SHORTLISTED, INTERVIEW_SCHEDULED, OFFERED, HIRED, REJECTED, WITHDRAWN |
+| ApplicationSource | CAREER_PAGE, LINKEDIN, INDEED, REFERRAL, AGENCY, DIRECT, OTHER |
+| OfferStatus | DRAFT, PENDING_APPROVAL, APPROVED, SENT, VIEWED, ACCEPTED, DECLINED, REVOKED, EXPIRED |
+| ApprovalStatus | PENDING, APPROVED, REJECTED |
+| ESignatureStatus | NOT_STARTED, SENT, VIEWED, SIGNED, DECLINED, EXPIRED |
+| ESignatureProvider | DOCUSIGN, HELLOSIGN, NONE |
+| CalendarProvider | GOOGLE, MICROSOFT |
+| SyncDirection | PUSH, PULL, BIDIRECTIONAL |
+| TriggerEvent | INTERVIEW_COMPLETED, FEEDBACK_SUBMITTED, SCORE_ABOVE_THRESHOLD, CANDIDATE_APPLIED, STAGE_COMPLETED |
+| ConditionType | SCORE_THRESHOLD, STATUS_EQUALS, FIELD_CONTAINS, ALWAYS |
+| ActionType | ADVANCE_PIPELINE, SEND_NOTIFICATION, UPDATE_STATUS, CREATE_TASK, WEBHOOK |
+| ApprovalMode | SEQUENTIAL, PARALLEL, ANY_ONE |
+| ApprovalEntityType | OFFER, JOB_REQUISITION, JOB_POSTING, BUDGET |
+| ApprovalRequestStatus | PENDING, APPROVED, REJECTED, CANCELLED |
+| ReferralStatus | SUBMITTED, CONTACTED, APPLIED, INTERVIEWING, HIRED, REJECTED, EXPIRED |
+| Gender | MALE, FEMALE, NON_BINARY, OTHER, PREFER_NOT_TO_SAY |
+| Ethnicity | WHITE, BLACK, HISPANIC, ASIAN, NATIVE_AMERICAN, PACIFIC_ISLANDER, MIXED, OTHER, PREFER_NOT_TO_SAY |
+| AgeRange | RANGE_18_24, RANGE_25_34, RANGE_35_44, RANGE_45_54, RANGE_55_64, RANGE_65_PLUS, PREFER_NOT_TO_SAY |
+| SourceType | LINKEDIN, INDEED, GLASSDOOR, REFERRAL, CAREER_PAGE, AGENCY, DIRECT, SOCIAL_MEDIA, JOB_FAIR, OTHER |
+
+---
+
+## Complete Entity Relationships (All Phases)
+
+| From | To | Type | FK Column |
+|------|----|------|-----------|
+| User → UserRole | 1:N | user_id |
+| Role → UserRole | 1:N | role_id |
+| Role → RolePermission | 1:N | role_id |
+| Permission → RolePermission | 1:N | permission_id |
+| User → UserProfile | 1:1 | user_id |
+| User → RefreshToken | 1:N | user_id |
+| User → Interview (candidate) | 1:N | candidate_id |
+| User → Interview (scheduledBy) | 1:N | scheduled_by_id |
+| Interview → InterviewInterviewer | 1:N | interview_id |
+| Interview → InterviewFeedBack | 1:N | interview_id |
+| Interview → CodingSession | 1:N | interview_id |
+| Interview → MeetingLink | 1:1 | interview_id |
+| Interview → JobPosition | N:1 | job_position_id |
+| InterviewTemplate → TemplateQuestion | 1:N | template_id |
+| Question → TemplateQuestion | 1:N | question_id |
+| QuestionCategory → Question | 1:N | category_id |
+| User → InterviewerAvailability | 1:N | interviewer_id |
+| User → Notification | 1:N | user_id |
+| InterviewPipeline → PipelineStage | 1:N | pipeline_id |
+| InterviewPipeline → CandidatePipeline | 1:N | pipeline_id |
+| User → CandidatePipeline | 1:N | candidate_id |
+| CandidatePipeline → CandidateStageProgress | 1:N | candidate_pipeline_id |
+| EvaluationScorecard → ScorecardEntry | 1:N | scorecard_id |
+| ScorecardEntry → EvaluationCriteria | N:1 | criteria_id |
+| User → Document | 1:N | uploaded_by |
+| User → AvailabilitySlot | 1:N | user_id |
+| Interview → InterviewReminder | 1:N | interview_id |
+| User → CandidatePreferredSlot | 1:N | candidate_id |
+| Team → TeamMember | 1:N | team_id |
+| TeamMember → User | N:1 | user_id |
+| Tag → EntityTag | 1:N | tag_id |
+| CodingSession → CodeExecution | 1:N | coding_session_id |
+| Organization → SsoConfiguration | 1:N | tenant_id |
+| User → AccountLockout | 1:1 | email |
+| User → UserMfa | 1:1 | user_id |
+| User → ApiKey | 1:N | user_id |
+| User → UserConsent | 1:N | user_id |
+| User → DataErasureRequest | 1:N | user_id |
+| JobPosition → JobApplication | 1:N | job_position_id |
+| User → JobApplication | 1:N | candidate_id |
+| OfferLetter → OfferApproval | 1:N | offer_id |
+| User → CalendarConnection | 1:N | user_id |
+| CalendarConnection → CalendarEvent | 1:N | connection_id |
+| OrganizationMember → Organization | N:1 | organization_id |
+| OrganizationMember → User | N:1 | user_id |
+| AiSuggestion → User | N:1 | user_id |
+| AiSuggestion → Interview | N:1 | interview_id |
+| VideoRecording → Interview | N:1 | interview_id |
+| VideoRecording → User | N:1 | recorded_by |
+| WhiteboardSession → Interview | N:1 | interview_id |
+| WhiteboardStroke → WhiteboardSession | N:1 | session_id |
+| WebhookEndpoint → User | N:1 | user_id |
+| WebhookDelivery → WebhookEndpoint | N:1 | endpoint_id |
+| CandidateFeedback → Interview | N:1 | interview_id |
+| ActivityEvent → User | N:1 | actor_id |
+| ExportImportJob → User | N:1 | user_id |
+| WorkflowRule → WorkflowExecution | 1:N | rule_id |
+| ApprovalChain → ApprovalStep | 1:N | chain_id |
+| ApprovalChain → ApprovalRequest | 1:N | chain_id |
+| ApprovalRequest → ApprovalDecision | 1:N | request_id |
+| Referral → User (referrer) | N:1 | referrer_id |
+| Referral → JobPosition | N:1 | job_position_id |
+| DemographicProfile → User | 1:1 | user_id |
+| CandidateSource → User | N:1 | candidate_id |
+
+---
+
+## Complete Database Migration History
+
+| Version | Description |
+|---------|-------------|
+| V1 | Auth & RBAC tables (users, roles, permissions, user_roles, role_permissions, user_profiles, refresh_tokens) |
+| V2 | Interview tables (interviews, interview_interviewers, interview_feedback) |
+| V3 | Token family for refresh token rotation (replay detection) |
+| V4 | Auth provider enum, drop sessions table |
+| V5 | Seed default RBAC data (ADMIN, RECRUITER, INTERVIEWER, CANDIDATE) |
+| V6 | Password reset tokens |
+| V7 | Email verification tokens |
+| V8 | Alter refresh_tokens.token to TEXT |
+| V9 | Coding sessions, question bank, categories, meeting links |
+| V10 | Notifications table |
+| V11 | Interview templates & template_questions |
+| V12 | Evaluation scorecards, criteria, entries |
+| V13 | Hiring pipelines, stages, candidate progress |
+| V14 | Documents table (S3 metadata storage) |
+| V15 | Job positions, interview linkage |
+| V16 | Scheduling, reminders, self-service, teams, tags |
+| V17 | AI suggestions, video recordings, whiteboard, webhooks, tenant, candidate feedback, activity events, export/import |
+| V18 | MFA (user_mfa), GDPR (user_consents, data_erasure_requests), API keys |
+| V19 | Code executions (sandboxed Docker execution results) |
+| V20 | SSO/SAML configurations |
+| V21 | Account lockout, login attempts, IP blocklist |
+| V22 | Column alterations for field-level encryption (AES-256-GCM) |
+| V23 | Job applications (candidate portal/job board) |
+| V24 | Offer letters & offer approvals |
+| V25 | Calendar sync (connections + events) |
+| V26 | Workflow rules & executions |
+| V27 | Approval chains, steps, requests, decisions |
+| V28 | Referrals |
+| V29 | DEI demographic profiles |
+| V30 | Candidate source tracking |
+

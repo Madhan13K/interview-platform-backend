@@ -28,6 +28,8 @@ public interface CandidatePipelineRepository extends JpaRepository<CandidatePipe
     @Query("SELECT cp FROM CandidatePipeline cp " +
             "LEFT JOIN FETCH cp.currentStage " +
             "LEFT JOIN FETCH cp.candidate " +
+            "LEFT JOIN FETCH cp.stageProgress sp " +
+            "LEFT JOIN FETCH sp.stage " +
             "WHERE cp.pipeline.id = :pipelineId")
     List<CandidatePipeline> findByPipelineId(@Param("pipelineId") UUID pipelineId);
 

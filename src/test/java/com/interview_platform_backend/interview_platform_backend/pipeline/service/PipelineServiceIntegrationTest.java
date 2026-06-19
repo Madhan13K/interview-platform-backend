@@ -1,5 +1,7 @@
 package com.interview_platform_backend.interview_platform_backend.pipeline.service;
 
+import com.interview_platform_backend.interview_platform_backend.AbstractIntegrationTest;
+
 import com.interview_platform_backend.interview_platform_backend.candidate.entity.InterviewType;
 import com.interview_platform_backend.interview_platform_backend.exception.BadRequestException;
 import com.interview_platform_backend.interview_platform_backend.exception.DuplicateResourceException;
@@ -27,9 +29,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("integration")
 @Transactional
-class PipelineServiceIntegrationTest {
+class PipelineServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private PipelineService pipelineService;

@@ -1,5 +1,7 @@
 package com.interview_platform_backend.interview_platform_backend.whiteboard.service;
 
+import com.interview_platform_backend.interview_platform_backend.AbstractIntegrationTest;
+
 import com.interview_platform_backend.interview_platform_backend.candidate.entity.Interview;
 import com.interview_platform_backend.interview_platform_backend.candidate.entity.InterviewMode;
 import com.interview_platform_backend.interview_platform_backend.candidate.entity.InterviewStatus;
@@ -35,9 +37,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("integration")
 @Transactional
-class WhiteboardServiceIntegrationTest {
+class WhiteboardServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private WhiteboardService whiteboardService;

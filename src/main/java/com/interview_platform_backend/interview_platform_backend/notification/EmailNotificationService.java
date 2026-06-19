@@ -4,8 +4,12 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +33,11 @@ public class EmailNotificationService {
     }
 
     @Async
+    @Retryable(
+            retryFor = {MailException.class, Exception.class},
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 2000, multiplier = 2.0, maxDelay = 10000)
+    )
     @CircuitBreaker(name = "emailService", fallbackMethod = "sendEmailFallback")
     public void sendEmail(String to, String subject, String body) {
         if (!notificationsEnabled) {
@@ -44,8 +53,8 @@ public class EmailNotificationService {
             message.setText(body);
             mailSender.send(message);
             log.info("Email sent to {} with subject: {}", to, subject);
-        } catch (Exception e) {
-            log.error("Failed to send email to {}: {}", to, e.getMessage());
+        } catch (MailException e) {
+            log.error("Failed to send email to {} (will retry): {}", to, e.getMessage());
             throw e;
         }
     }
@@ -55,6 +64,13 @@ public class EmailNotificationService {
         for (String recipient : recipients) {
             sendEmail(recipient, subject, body);
         }
+    }
+
+    @Recover
+    private void sendEmailFallback(MailException ex, String to, String subject, String body) {
+        log.error("All retry attempts exhausted for email to={}. subject={}. Error: {}",
+                to, subject, ex.getMessage());
+        // TODO: Push to dead letter queue (Kafka topic) for manual retry
     }
 
     private void sendEmailFallback(String to, String subject, String body, Throwable throwable) {

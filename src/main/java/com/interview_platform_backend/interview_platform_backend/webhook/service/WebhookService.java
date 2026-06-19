@@ -148,9 +148,12 @@ public class WebhookService {
             throw new BadRequestException("Only FAILED or RETRYING deliveries can be retried");
         }
 
+        // Persist retry state to DB so it survives app restarts
         delivery.setStatus(WebhookDelivery.DeliveryStatus.PENDING);
         delivery.setAttempt(0);
         delivery.setNextRetryAt(null);
+        delivery.setResponseBody(null);
+        delivery.setResponseStatus(null);
 
         WebhookDelivery saved = webhookDeliveryRepository.save(delivery);
         return mapToDeliveryResponse(saved);

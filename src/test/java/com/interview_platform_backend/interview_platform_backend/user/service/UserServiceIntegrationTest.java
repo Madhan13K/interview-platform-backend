@@ -1,5 +1,7 @@
 package com.interview_platform_backend.interview_platform_backend.user.service;
 
+import com.interview_platform_backend.interview_platform_backend.AbstractIntegrationTest;
+
 import com.interview_platform_backend.interview_platform_backend.exception.BadRequestException;
 import com.interview_platform_backend.interview_platform_backend.exception.DuplicateResourceException;
 import com.interview_platform_backend.interview_platform_backend.exception.ResourceNotFoundException;
@@ -34,9 +36,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("integration")
 @Transactional
-class UserServiceIntegrationTest {
+class UserServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private UserService userService;

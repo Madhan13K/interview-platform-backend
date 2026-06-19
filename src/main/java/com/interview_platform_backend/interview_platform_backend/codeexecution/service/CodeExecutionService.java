@@ -59,6 +59,52 @@ public class CodeExecutionService {
     }
 
     /**
+     * Startup cleanup: remove orphaned containers from previous crashes.
+     * Runs automatically when the application starts.
+     */
+    @jakarta.annotation.PostConstruct
+    public void cleanupOrphanedContainers() {
+        if (!properties.isEnabled()) return;
+
+        try {
+            log.info("Cleaning up orphaned code execution containers...");
+            var containers = dockerClient.listContainersCmd()
+                    .withLabelFilter(java.util.Map.of("interview-platform", "code-execution"))
+                    .withShowAll(true)
+                    .exec();
+
+            int cleaned = 0;
+            for (var container : containers) {
+                try {
+                    dockerClient.removeContainerCmd(container.getId())
+                            .withForce(true)
+                            .withRemoveVolumes(true)
+                            .exec();
+                    cleaned++;
+                } catch (Exception e) {
+                    log.warn("Failed to remove orphaned container {}: {}", container.getId(), e.getMessage());
+                }
+            }
+
+            if (cleaned > 0) {
+                log.info("Cleaned up {} orphaned code execution containers", cleaned);
+            }
+
+            // Also mark any RUNNING/QUEUED executions as ERROR (stale from crash)
+            codeExecutionRepository.findByStatusIn(
+                    List.of(ExecutionStatus.RUNNING, ExecutionStatus.QUEUED)
+            ).forEach(exec -> {
+                exec.setStatus(ExecutionStatus.ERROR);
+                exec.setErrorMessage("Execution interrupted by server restart");
+                exec.setCompletedAt(Instant.now());
+                codeExecutionRepository.save(exec);
+            });
+        } catch (Exception e) {
+            log.warn("Container cleanup on startup failed (Docker may be unavailable): {}", e.getMessage());
+        }
+    }
+
+    /**
      * Submit code for execution in a Docker sandbox.
      */
     @Transactional

@@ -1,5 +1,7 @@
 package com.interview_platform_backend.interview_platform_backend.activity.service;
 
+import com.interview_platform_backend.interview_platform_backend.AbstractIntegrationTest;
+
 import com.interview_platform_backend.interview_platform_backend.activity.dto.ActivityEventResponse;
 import com.interview_platform_backend.interview_platform_backend.activity.dto.ActivityFilterRequest;
 import com.interview_platform_backend.interview_platform_backend.exception.ResourceNotFoundException;
@@ -26,9 +28,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("integration")
 @Transactional
-class ActivityServiceIntegrationTest {
+class ActivityServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private ActivityService activityService;
